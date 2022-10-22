@@ -1,0 +1,33 @@
+{
+  "name": "nero-bot-v2",
+  "version": "1.0.0",
+  "description": "Version 2 of Nero discord bot.",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/types",
+  "scripts": {
+    "removeDist": "(rmdir /q /s dist 2> NUL || exit 0)",
+    "clean": "npm run removeDist && npm run removeNPMPack",
+    "prebuild-stop-linting-during-dev-please": "npm run lint",
+    "build": "tsc --pretty",
+    "prestart": "npm run build",
+    "start": "node . -i ./examples/vpp-larger-sample.csv -o ./examples/vpp-larger-sample.json -H id,versionOf,status,publishStatus,organizationId,createdBy,modifiedBy,createdDate,modifiedDate,archivedDate,data,pdfData,attachmentUrl",
+    "lint": "eslint . --fix --ext .ts --report-unused-disable-directives --cache"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jozhus/nero-bot-v2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jozhus/nero-bot-v2/issues"
+  },
+  "homepage": "https://github.com/Jozhus/nero-bot-v2#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.40.1",
+    "eslint": "^8.26.0",
+    "eslint-config-standard-with-typescript": "^23.0.0",
+    "typescript": "^4.8.4"
+  }
+}

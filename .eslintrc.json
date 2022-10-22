@@ -1,0 +1,20 @@
+{
+    "root": true,
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": "standard-with-typescript",
+    "rules": {
+        "no-console": "off",
+        "@typescript-eslint/restrict-template-expressions" : "off",
+        "@typescript-eslint/typedef": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "no-sequences": "off",
+        "computed-property-spacing": "off"
+    }
+}
