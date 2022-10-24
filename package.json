@@ -11,7 +11,7 @@
     "prebuild-stop-linting-during-dev-please": "npm run lint",
     "build": "tsc --pretty",
     "prestart": "npm run build",
-    "start": "node . -i ./examples/vpp-larger-sample.csv -o ./examples/vpp-larger-sample.json -H id,versionOf,status,publishStatus,organizationId,createdBy,modifiedBy,createdDate,modifiedDate,archivedDate,data,pdfData,attachmentUrl",
+    "start": "node .",
     "lint": "eslint . --fix --ext .ts --report-unused-disable-directives --cache"
   },
   "repository": {
@@ -29,5 +29,10 @@
     "eslint": "^8.26.0",
     "eslint-config-standard-with-typescript": "^23.0.0",
     "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "discord.js": "^14.6.0",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20"
   }
 }
