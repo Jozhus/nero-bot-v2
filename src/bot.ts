@@ -1,8 +1,9 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { CacheType, Client, Collection, CommandInteraction, Events, GatewayIntentBits, Interaction } from "discord.js";
 import commandList from "./commands/index.js";
-import { ICommand } from "./models/ICommand";
+import { loginToken } from "./constants/stringConstants.js";
+import { ICommand } from "./models/ICommand.js";
+import { deployCommands } from "./slashCommands.js";
 
-const loginToken: string = process.env.TOKEN;
 const client: Client<boolean> = new Client({ intents: [ GatewayIntentBits.Guilds ] });
 const commands: Collection<string, ICommand> = new Collection<string, ICommand>();
 
@@ -11,9 +12,25 @@ commandList.forEach((command: ICommand) => {
     commands.set(command.data.name, command);
 });
 
+client.on(Events.InteractionCreate, async (interaction: Interaction<CacheType>) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    const command: ICommand = commands.get(interaction.commandName);
+
+    if (!command) return;
+
+    try {
+        await command.execute(interaction);
+    } catch (err) {
+        console.error(err);
+    }
+})
+
 /* Login */
 client.once(Events.ClientReady, (c: Client<true>) => {
     console.log(`Logged in as ${c.user.tag}!`);
+
+    deployCommands();
 });
 
 client.login(loginToken);
