@@ -12,6 +12,7 @@ commandList.forEach((command: ICommand) => {
     commands.set(command.data.name, command);
 });
 
+/* Handle slash commands */
 client.on(Events.InteractionCreate, async (interaction: Interaction<CacheType>) => {
     if (!interaction.isChatInputCommand()) return;
 
