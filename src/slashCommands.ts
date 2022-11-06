@@ -6,13 +6,12 @@ import { ICommand } from "./models/ICommand.js";
 const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commandList.map((command: ICommand) => command.data.toJSON());
 const rest: REST = new REST().setToken(loginToken);
 
-async function deployCommands() {
+async function deployCommands(): Promise<void> {
     try {
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
         await rest.put(
-            Routes.applicationCommands(clientId),
-            {
+            Routes.applicationCommands(clientId), {
                 body: commands
             }
         );

@@ -7,8 +7,7 @@
   "types": "dist/types",
   "scripts": {
     "removeDist": "(rmdir /q /s dist 2> NUL || exit 0)",
-    "clean": "npm run removeDist && npm run removeNPMPack",
-    "prebuild-stop-linting-during-dev-please": "npm run lint",
+    "prebuild": "npm run removeDist",
     "build": "tsc --pretty",
     "prestart": "npm run build",
     "start": "node .",
