@@ -11,7 +11,9 @@
     "build": "tsc --pretty",
     "prestart": "npm run build",
     "start": "node .",
-    "lint": "eslint . --fix --ext .ts --report-unused-disable-directives --cache"
+    "lint": "eslint . --fix --ext .ts --report-unused-disable-directives --cache",
+    "prerestart": "npm run prestart",
+    "restart": "pm2 restart nero-bot"
   },
   "repository": {
     "type": "git",
