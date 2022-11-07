@@ -1,5 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { ICommand } from "../models/ICommand";
+import { logCommand } from "../helpers/logger.js";
+import { ICommand } from "../models/ICommand.js";
 
 const defaultAmount: number = 1;
 const defaultSides: number = 100;
@@ -8,7 +9,7 @@ const maxDice: number = 50;
 const command: ICommand = {
     data: new SlashCommandBuilder()
         .setName("roll")
-        .setDescription("Nero will roll a n m-sided dice for you. (1 to n)")
+        .setDescription("Nero will roll n m-sided dice for you. (1 to n)")
         .addIntegerOption(option => 
             option.setName("amount")
                 .setDescription(`Amount of dice to roll. (Default: ${defaultAmount}) (Max: ${maxDice})`)
@@ -23,10 +24,21 @@ const command: ICommand = {
                 .setRequired(false)
         ),
     async execute(interaction: CommandInteraction) {
-        const amount: string | number | boolean = interaction.options.get("amount")?.value;
-        const sides: string | number | boolean = interaction.options.get("sides")?.value;
+        const amount: number = (interaction.options.get("amount")?.value as number) || defaultAmount;
+        const sides: number = (interaction.options.get("sides")?.value as number) || defaultSides;
+        const result: number[] = roll(amount, sides);
 
-        await interaction.reply(roll((!amount || typeof amount !== "number") ? defaultAmount : amount, (!sides || typeof sides !== "number") ? defaultSides : sides).join(", "));
+        await interaction.reply(result.join(", "));
+
+        logCommand({
+            source: "roll",
+            interaction,
+            parameters: {
+                amount,
+                sides
+            },
+            result: result.join(", ")
+        });
     }
 }
 

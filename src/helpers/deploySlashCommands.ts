@@ -1,7 +1,7 @@
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from "discord.js";
-import commandList from "./commands/index.js";
-import { clientId, loginToken } from "./constants/stringConstants.js";
-import { ICommand } from "./models/ICommand.js";
+import commandList from "../commands/index.js";
+import { clientId, loginToken } from "../constants/stringConstants.js";
+import { ICommand } from "../models/ICommand.js";
 
 const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commandList.map((command: ICommand) => command.data.toJSON());
 const rest: REST = new REST().setToken(loginToken);

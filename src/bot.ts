@@ -2,7 +2,7 @@ import { CacheType, Client, Collection, CommandInteraction, Events, GatewayInten
 import commandList from "./commands/index.js";
 import { loginToken } from "./constants/stringConstants.js";
 import { ICommand } from "./models/ICommand.js";
-import { deployCommands } from "./slashCommands.js";
+import { deployCommands } from "./helpers/deploySlashCommands.js";
 
 const client: Client<boolean> = new Client({ intents: [ GatewayIntentBits.Guilds ] });
 const commands: Collection<string, ICommand> = new Collection<string, ICommand>();
