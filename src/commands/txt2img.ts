@@ -3,8 +3,8 @@ import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
 import { txt2imgDefaults } from "../constants/commandDefaults.js";
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { sdAPI } from "../constants/stringConstants.js";
-import { ITxt2ImgPayload } from "../models/ITxt2ImgPayload.js";
+import { sample_methods, sdAPI } from "../constants/stringConstants.js";
+import { ITxt2ImgPayload, SamplingMethods } from "../models/ITxt2ImgPayload.js";
 
 // TODO: Add sampling model selection
 
@@ -39,6 +39,14 @@ const command: ICommand = {
                 .setDescription(`A value that determines the output of random number generator. (Default: Random)`)
                 .setMinValue(1)
                 .setRequired(false)
+        ).addStringOption(option => 
+            option.setName("sample_method")
+                .setDescription(`Which algorithm to use to produce the image. (Default: ${txt2imgDefaults.sampler_index})`)
+                .addChoices(...(sample_methods.map((method: string) => {return { name: method, value: method }})))
+        ).addBooleanOption(option => 
+            option.setName("fix_faces")
+                .setDescription(`Restore low quality faces using GFPGAN neural network. (Default: ${txt2imgDefaults.restore_faces}})`)
+                .setRequired(false)
         ),
     async execute(interaction: CommandInteraction) {
         const prompt: string = interaction.options.get("prompt").value as string;
@@ -46,13 +54,17 @@ const command: ICommand = {
         const steps: number = interaction.options.get("steps")?.value as number;
         const cfg_scale: number = interaction.options.get("guidance_strength")?.value as number;
         const seed: number = interaction.options.get("seed")?.value as number;
+        const sampler_index: SamplingMethods = interaction.options.get("sample_method")?.value as SamplingMethods;
+        const restore_faces: boolean = interaction.options.get("fix_faces")?.value as boolean;
 
         const options: ITxt2ImgPayload = {
             prompt,
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
             ...(cfg_scale) && { cfg_scale },
-            ...(seed) && { seed }
+            ...(seed) && { seed },
+            ...(sampler_index) && { sampler_index },
+            ...(restore_faces) && { restore_faces },
         }
 
         await interaction.reply("Hang on a sec, I'm working on it!");
