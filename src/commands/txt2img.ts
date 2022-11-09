@@ -45,7 +45,7 @@ const command: ICommand = {
                 .addChoices(...(sample_methods.map((method: string) => {return { name: method, value: method }})))
         ).addBooleanOption(option => 
             option.setName("fix_faces")
-                .setDescription(`Restore low quality faces using GFPGAN neural network. (Default: ${txt2imgDefaults.restore_faces}})`)
+                .setDescription(`Restore low quality faces using GFPGAN neural network. (Default: ${txt2imgDefaults.restore_faces})`)
                 .setRequired(false)
         ),
     async execute(interaction: CommandInteraction) {
