@@ -6,5 +6,6 @@ const rootDir: string = dirname(fileURLToPath(import.meta.url)).replace("constan
 
 const loginToken: string = process.env.TOKEN;
 const clientId: string = process.env.CLIENTID;
+const sdAPI: string = process.env.SDAPI_TXT2IMG;
 
-export { rootDir, loginToken, clientId };
+export { rootDir, loginToken, clientId, sdAPI };

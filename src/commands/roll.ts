@@ -2,6 +2,7 @@ import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
 import { rollDefaults } from "../constants/commandDefaults.js";
+import { IRollOptions } from "../models/IRollOptions.js";
 
 const command: ICommand = {
     data: new SlashCommandBuilder()
@@ -21,9 +22,15 @@ const command: ICommand = {
                 .setRequired(false)
         ),
     async execute(interaction: CommandInteraction) {
-        const amount: number = (interaction.options.get("amount")?.value as number) || rollDefaults.amount;
-        const sides: number = (interaction.options.get("sides")?.value as number) || rollDefaults.sides;
-        const result: number[] = roll(amount, sides);
+        const amount: number = interaction.options.get("amount")?.value as number;
+        const sides: number = interaction.options.get("sides")?.value as number;
+
+        const options: IRollOptions = {
+            ...(amount) && { amount },
+            ...(sides) && { sides }
+        };
+
+        const result: number[] = roll(options);
 
         await interaction.reply(result.join(", "));
 
@@ -31,19 +38,20 @@ const command: ICommand = {
             source: "roll",
             interaction,
             parameters: {
-                amount,
-                sides
+                ...rollDefaults,
+                ...options
             },
             result: result.join(", ")
         });
     }
 }
 
-function roll(amount: number, sides: number): number[] {
+function roll(options: IRollOptions): number[] {
+    const rollOptions: IRollOptions = { ...rollDefaults, ...options };
     const results: number[] = [];
 
-    for (; amount > 0; amount--) {
-        results.push(Math.floor(Math.random() * (sides || rollDefaults.sides) + 1));
+    for (; rollOptions.amount > 0; rollOptions.amount--) {
+        results.push(Math.floor(Math.random() * (rollOptions.sides) + 1));
     }
 
     return results;

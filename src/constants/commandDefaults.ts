@@ -1,13 +1,20 @@
-interface IRollDefaults {
-    amount: number;
-    sides: number;
-    maxDice: number;
-};
+import { IRollOptions } from "../models/IRollOptions";
+import { ITxt2ImgPayload } from "../models/ITxt2ImgPayload";
 
-const rollDefaults: IRollDefaults = {
+const rollDefaults: IRollOptions = {
     amount: 1,
     sides: 100,
     maxDice: 50
-}
+};
 
-export { rollDefaults };
+const txt2imgDefaults: ITxt2ImgPayload = {
+    prompt: "",
+    steps: 32,
+    cfg_scale: 12,
+    width: 512,
+    height: 512,
+    negative_prompt: "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts,signature, watermark, username, blurry, artist name",
+    sampler_index: "Euler"
+};
+
+export { rollDefaults, txt2imgDefaults };
