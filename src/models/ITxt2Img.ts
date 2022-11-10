@@ -90,4 +90,11 @@ interface ITxt2ImgPayload {
      */
     sampler_index?: SamplingMethods;
 };
-export { ITxt2ImgPayload, SamplingMethods };
+
+interface ITxt2ImgResponse {
+    images: string[];
+    parameters: ITxt2ImgPayload;
+    info: string;
+};
+
+export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods };

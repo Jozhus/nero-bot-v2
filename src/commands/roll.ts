@@ -26,6 +26,7 @@ const command: ICommand = {
         const sides: number = interaction.options.get("sides")?.value as number;
 
         const options: IRollOptions = {
+            ...rollDefaults,
             ...(amount) && { amount },
             ...(sides) && { sides }
         };
@@ -47,11 +48,10 @@ const command: ICommand = {
 }
 
 function roll(options: IRollOptions): number[] {
-    const rollOptions: IRollOptions = { ...rollDefaults, ...options };
     const results: number[] = [];
 
-    for (; rollOptions.amount > 0; rollOptions.amount--) {
-        results.push(Math.floor(Math.random() * (rollOptions.sides) + 1));
+    for (; options.amount > 0; options.amount--) {
+        results.push(Math.floor(Math.random() * (options.sides) + 1));
     }
 
     return results;

@@ -1,12 +1,10 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { APIEmbedField, AttachmentBuilder, CommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
 import { txt2imgDefaults } from "../constants/commandDefaults.js";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { sample_methods, sdAPI } from "../constants/stringConstants.js";
-import { ITxt2ImgPayload, SamplingMethods } from "../models/ITxt2ImgPayload.js";
-
-// TODO: Add sampling model selection
+import { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods } from "../models/ITxt2Img.js";
 
 const command: ICommand = {
     data: new SlashCommandBuilder()
@@ -15,11 +13,13 @@ const command: ICommand = {
         .addStringOption(option => 
             option.setName("prompt")
                 .setDescription("Text prompt for AI to think about")
+                .setMaxLength(1024)
                 .setRequired(true)
         )
         .addStringOption(option => 
             option.setName("negative_prompt")
                 .setDescription(`Text prompt for AI to avoid thinking about.`)
+                .setMaxLength(1024)
                 .setRequired(false)
         ).addIntegerOption(option => 
             option.setName("steps")
@@ -58,6 +58,7 @@ const command: ICommand = {
         const restore_faces: boolean = interaction.options.get("fix_faces")?.value as boolean;
 
         const options: ITxt2ImgPayload = {
+            ...txt2imgDefaults,
             prompt,
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
@@ -67,12 +68,42 @@ const command: ICommand = {
             ...(restore_faces) && { restore_faces },
         }
 
-        await interaction.reply("Hang on a sec, I'm working on it!");
-        const buff: Buffer = await txt2img(options);
+        // TODO: Maybe make this a template for other commands to use
+        const responseEmbed: EmbedBuilder = new EmbedBuilder()
+            .setAuthor({ name: "txt2img", iconURL: "https://i.imgur.com/HEj61LF.png" })
+            .setTitle("Nero-bot")
+            .setColor(0x71368a)
+            .setThumbnail("https://i.imgur.com/0ZuHGyJ.png")
+            .setDescription("Hang on a sec, I'm working on it!")
+            .addFields(
+                { name: "Prompt", value: options.prompt },
+                { name: "Negative Prompt", value: options.negative_prompt },
+                { name: "Sampling Method", value: options.sampler_index, inline: true },
+                { name: "CFG", value: `${options.cfg_scale}`, inline: true },
+                { name: "Restore Faces", value: `${options.restore_faces}`, inline: true },
+                { name: "Seed", value: `${(options.seed === -1) ? "..." : options.seed}`, inline: true },
+            );
 
-        console.log(buff.length);
-        await interaction.editReply("Here ya go:");
-        await interaction.editReply({ files: [ buff ], options: { content: "" } });
+        await interaction.reply({ embeds: [ responseEmbed ] });
+
+        const imgInfo: ITxt2ImgResponse = await txt2img(options);
+        const output: AttachmentBuilder = new AttachmentBuilder(Buffer.from(imgInfo.images[0], "base64"), { name: "output.png" });
+
+        await interaction.editReply({
+            embeds: [
+                responseEmbed
+                    .setDescription("Here ya go!")
+                    .setThumbnail("https://i.imgur.com/Jr2xoJw.png")
+                    .setImage("attachment://output.png")
+                    // This is pretty tedious, but it finds and replaces the seed value.
+                    .spliceFields(responseEmbed.data.fields.map((field: APIEmbedField) => field.name).indexOf("Seed"), 1,
+                        { name: "Seed", value: `${JSON.parse(imgInfo.info).seed}` }
+                    )
+                    // TODO: Add timestamps. Maybe total generation time.
+            ],
+            files: [ output ]
+        });
+
 
         logCommand({
             source: "txt2img",
@@ -86,17 +117,15 @@ const command: ICommand = {
     }
 }
 
-async function txt2img(options: ITxt2ImgPayload): Promise<Buffer> {
-    const data: ITxt2ImgPayload = {...txt2imgDefaults, ...options};
-
+async function txt2img(options: ITxt2ImgPayload): Promise<ITxt2ImgResponse> {
     return axios({
         method: "POST",
         url: sdAPI,
         timeout: 120000,
-        data
+        data: options
     })
-    .then((response: AxiosResponse) => {
-        return Buffer.from(response.data.images[0], "base64");
+    .then((response: AxiosResponse<ITxt2ImgResponse>) => {
+        return response.data;
     })
     .catch((err: AxiosError) => {
         // TODO: Use logger
