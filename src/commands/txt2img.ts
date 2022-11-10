@@ -58,7 +58,6 @@ const command: ICommand = {
         const restore_faces: boolean = interaction.options.get("fix_faces")?.value as boolean;
 
         const options: ITxt2ImgPayload = {
-            ...txt2imgDefaults,
             prompt,
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
@@ -68,21 +67,21 @@ const command: ICommand = {
             ...(restore_faces) && { restore_faces },
         }
 
-        // TODO: Maybe make this a template for other commands to use
+        // TODO: Maybe make a template for other commands to use
         const responseEmbed: EmbedBuilder = new EmbedBuilder()
             .setAuthor({ name: "txt2img", iconURL: "https://i.imgur.com/HEj61LF.png" })
             .setTitle("Nero-bot")
-            .setColor(0x71368a)
+            .setColor(0x6786ed)
             .setThumbnail("https://i.imgur.com/0ZuHGyJ.png")
             .setDescription("Hang on a sec, I'm working on it!")
-            .addFields(
-                { name: "Prompt", value: options.prompt },
-                { name: "Negative Prompt", value: options.negative_prompt },
-                { name: "Sampling Method", value: options.sampler_index, inline: true },
-                { name: "CFG", value: `${options.cfg_scale}`, inline: true },
-                { name: "Restore Faces", value: `${options.restore_faces}`, inline: true },
-                { name: "Seed", value: `${(options.seed === -1) ? "..." : options.seed}`, inline: true },
-            );
+            .addFields(Object.entries(options).map(([name, value]: [string, string | number]) => {
+                return {
+                    name,
+                    value: `${value}`,
+                    inline: (!["prompt", "negative_prompt", "seed"].includes(name))
+                };
+            }))
+            .setFooter((options.seed) ? { text: `Seed: ${options.seed}` } : null);
 
         await interaction.reply({ embeds: [ responseEmbed ] });
 
@@ -92,13 +91,11 @@ const command: ICommand = {
         await interaction.editReply({
             embeds: [
                 responseEmbed
+                    .setColor(0x77dd77)
                     .setDescription("Here ya go!")
                     .setThumbnail("https://i.imgur.com/Jr2xoJw.png")
                     .setImage("attachment://output.png")
-                    // This is pretty tedious, but it finds and replaces the seed value.
-                    .spliceFields(responseEmbed.data.fields.map((field: APIEmbedField) => field.name).indexOf("Seed"), 1,
-                        { name: "Seed", value: `${JSON.parse(imgInfo.info).seed}` }
-                    )
+                    .setFooter({ text: `Seed: ${JSON.parse(imgInfo.info).seed}` })
                     // TODO: Add timestamps. Maybe total generation time.
             ],
             files: [ output ]
@@ -118,11 +115,13 @@ const command: ICommand = {
 }
 
 async function txt2img(options: ITxt2ImgPayload): Promise<ITxt2ImgResponse> {
+    const data: ITxt2ImgPayload = { ...txt2imgDefaults, ...options };
+
     return axios({
         method: "POST",
         url: sdAPI,
         timeout: 120000,
-        data: options
+        data
     })
     .then((response: AxiosResponse<ITxt2ImgResponse>) => {
         return response.data;
