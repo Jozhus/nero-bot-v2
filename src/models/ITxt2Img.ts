@@ -1,6 +1,6 @@
-import { sample_methods } from "../constants/stringConstants";
+import { sampleMethods } from "../constants/stringConstants";
 
-type SamplingMethods = typeof sample_methods[number];
+type SamplingMethods = typeof sampleMethods[number];
 
 interface ITxt2ImgPayload {
     /**
@@ -89,6 +89,7 @@ interface ITxt2ImgPayload {
      * Which algorithm to use to produce the image
      */
     sampler_index?: SamplingMethods;
+    override_settings?: ISettings
 };
 
 interface ITxt2ImgResponse {
@@ -97,4 +98,10 @@ interface ITxt2ImgResponse {
     info: string;
 };
 
-export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods };
+interface ISettings {
+    sd_hypernetwork?: string;
+    sd_hypernetwork_strength?: number;
+    // There are so many more, but I will add only the ones I plan to use
+}
+
+export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods, ISettings };

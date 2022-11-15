@@ -16,7 +16,10 @@ const txt2imgDefaults: ITxt2ImgPayload = {
     negative_prompt: "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts,signature, watermark, username, blurry, artist name",
     sampler_index: "Euler",
     restore_faces: false,
-    seed: -1
+    seed: -1,
+    override_settings: {
+        sd_hypernetwork_strength: 1
+    }
 };
 
 export { rollDefaults, txt2imgDefaults };

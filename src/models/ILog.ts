@@ -7,7 +7,7 @@ interface ILog {
 interface ICommandLog extends ILog {
     interaction: CommandInteraction;
     parameters: {
-        [parameter: string]: number | string | boolean | number[] | string[] | boolean[];
+        [parameter: string]: number | string | boolean | number[] | string[] | boolean[] | Object;
     };
     result: string;
 };

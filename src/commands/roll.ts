@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandIntegerOption } from "discord.js";
 import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
 import { rollDefaults } from "../constants/commandDefaults.js";
@@ -8,20 +8,20 @@ const command: ICommand = {
     data: new SlashCommandBuilder()
         .setName("roll")
         .setDescription("Nero will roll n m-sided dice for you. (1 to n)")
-        .addIntegerOption(option => 
+        .addIntegerOption((option: SlashCommandIntegerOption) => 
             option.setName("amount")
                 .setDescription(`Amount of dice to roll. (Default: ${rollDefaults.amount}) (Max: ${rollDefaults.maxDice})`)
                 .setMinValue(1)
                 .setMaxValue(rollDefaults.maxDice)
                 .setRequired(false)
         )
-        .addIntegerOption(option => 
+        .addIntegerOption((option: SlashCommandIntegerOption) => 
             option.setName("sides")
                 .setDescription(`Amount of sides on each die. (Default: ${rollDefaults.sides})`)
                 .setMinValue(1)
                 .setRequired(false)
         ),
-    async execute(interaction: CommandInteraction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const amount: number = interaction.options.get("amount")?.value as number;
         const sides: number = interaction.options.get("sides")?.value as number;
 
