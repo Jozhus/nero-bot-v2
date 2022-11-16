@@ -1,4 +1,4 @@
-import { AutocompleteInteraction, CacheType, Client, Collection, CommandInteraction, Events, GatewayIntentBits, Interaction, ModalSubmitInteraction } from "discord.js";
+import { CacheType, Client, Collection, Events, GatewayIntentBits, Interaction } from "discord.js";
 import commandList from "./commands/index.js";
 import { loginToken } from "./constants/stringConstants.js";
 import { ICommand } from "./models/ICommand.js";

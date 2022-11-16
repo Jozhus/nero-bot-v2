@@ -22,9 +22,10 @@ const command: ICommand = {
                 .setRequired(false)
         ),
     async execute(interaction: ChatInputCommandInteraction) {
-        const amount: number = interaction.options.get("amount")?.value as number;
-        const sides: number = interaction.options.get("sides")?.value as number;
+        const amount: number = interaction.options.getInteger("amount");
+        const sides: number = interaction.options.getInteger("sides");
 
+        /* Construct options object with given parameters only if they exist */
         const options: IRollOptions = {
             ...(amount) && { amount },
             ...(sides) && { sides }
@@ -46,6 +47,12 @@ const command: ICommand = {
     }
 }
 
+/**
+ * Generates a list of random numbers constricted by the given roll options.
+ * 
+ * @param options An object to control how to constrict the random number generation.
+ * @returns The resulting list of random, constricted numbers.
+ */
 function roll(options: IRollOptions): number[] {
     const results: number[] = [];
     const rollOptions: IRollOptions = { ...rollDefaults, ...options };
