@@ -25,4 +25,11 @@ interface ICommand {
     autocomplete?(interaction: AutocompleteInteraction): Promise<void>;
 };
 
-export { ICommand };
+/**
+ * Min / max constraints for slash command parameters.
+ */
+interface ICommandParameterConstraints {
+    readonly [parameter: string]: number;
+};
+
+export { ICommand, ICommandParameterConstraints };

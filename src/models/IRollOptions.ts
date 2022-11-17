@@ -10,10 +10,6 @@ interface IRollOptions {
      * Amount of sides on each die.
      */
     sides?: number;
-    /**
-     * Max number of dice to allow users to roll.
-     */
-    maxDice?: number;
 };
 
 export { IRollOptions };

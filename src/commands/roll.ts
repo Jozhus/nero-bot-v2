@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandIntegerOption } from "discord.js";
 import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
-import { rollDefaults } from "../constants/commandDefaults.js";
+import { rollParameterDefaults, rollParameterConstraints } from "../constants/commandConstants.js";
 import { IRollOptions } from "../models/IRollOptions.js";
 
 const command: ICommand = {
@@ -10,15 +10,15 @@ const command: ICommand = {
         .setDescription("Nero will roll n m-sided dice for you. (1 to n)")
         .addIntegerOption((option: SlashCommandIntegerOption) => 
             option.setName("amount")
-                .setDescription(`Amount of dice to roll. (Default: ${rollDefaults.amount}) (Max: ${rollDefaults.maxDice})`)
-                .setMinValue(1)
-                .setMaxValue(rollDefaults.maxDice)
+                .setDescription(`Amount of dice to roll. (Default: ${rollParameterDefaults.amount}) (Max: ${rollParameterConstraints.maxDice})`)
+                .setMinValue(rollParameterConstraints.minAmount)
+                .setMaxValue(rollParameterConstraints.maxDice)
                 .setRequired(false)
         )
         .addIntegerOption((option: SlashCommandIntegerOption) => 
             option.setName("sides")
-                .setDescription(`Amount of sides on each die. (Default: ${rollDefaults.sides})`)
-                .setMinValue(1)
+                .setDescription(`Amount of sides on each die. (Default: ${rollParameterDefaults.sides})`)
+                .setMinValue(rollParameterConstraints.minSides)
                 .setRequired(false)
         ),
     async execute(interaction: ChatInputCommandInteraction) {
@@ -39,7 +39,7 @@ const command: ICommand = {
             source: "roll",
             interaction,
             parameters: {
-                ...rollDefaults,
+                ...rollParameterDefaults,
                 ...options
             },
             result: result.join(", ")
@@ -55,7 +55,7 @@ const command: ICommand = {
  */
 function roll(options: IRollOptions): number[] {
     const results: number[] = [];
-    const rollOptions: IRollOptions = { ...rollDefaults, ...options };
+    const rollOptions: IRollOptions = { ...rollParameterDefaults, ...options };
 
     for (; rollOptions.amount > 0; rollOptions.amount--) {
         results.push(Math.floor(Math.random() * (rollOptions.sides) + 1));

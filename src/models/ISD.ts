@@ -17,7 +17,13 @@ interface ITxt2ImgPayload {
      * Determines how little respect the algorithm should have for image's content. At 0, nothing will change, and at 1 you'll get an unrelated image. With values below 1.0, processing will take less steps than the Sampling Steps slider specifies.
      */
     denoising_strength?: number;
+    /**
+     * Width of the first pass image when highres fix is enabled.
+     */
     firstphase_width?: number;
+    /**
+     * Height of the first pass image when highres fix is enabled.
+     */
     firstphase_height?: number;
     /**
      * Text prompt for AI to think about
@@ -64,11 +70,11 @@ interface ITxt2ImgPayload {
      */
     cfg_scale?: number;
     /**
-     * Width of output image
+     * Width of the generated image
      */
     width?: number;
     /**
-     * Heigh of output image
+     * Height of the generated image
      */
     height?: number;
     /**
@@ -98,7 +104,7 @@ interface ITxt2ImgPayload {
     /**
      * A list of settings and values to override the current settings only for the single interaction.
      */
-    override_settings?: ISettings
+    override_settings?: ISDSettings
 };
 
 /**
@@ -123,7 +129,7 @@ interface ITxt2ImgResponse {
  * A schema for all of stable-diffusion-webui's internal settings.
  * There are so many more, but I will add only the ones I plan to use.
  */
-interface ISettings {
+interface ISDSettings {
     /**
      * The name of the hypernetwork being used.
      */
@@ -134,4 +140,39 @@ interface ISettings {
     sd_hypernetwork_strength?: number;
 }
 
-export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods, ISettings };
+interface ISDCustomizations {
+    /**
+     * Sidebar color of embed while image is generating.
+     */
+    unfinishedEmbedColor: number;
+    /**
+     * Link of image to use for the embed while image is generating.
+     */
+    unfinishedEmbedThumbnail: string | null;
+    /**
+     * Description of embed while image is generating.
+     */
+    unfinishedEmbedDescription: string | null;
+    /**
+     * Sidebar color of embed after image finishes generating.
+     */
+    finishedEmbedColor: number;
+    /**
+     * Link of image to use for the embed after image finishes generating.
+     */
+    finishedEmbedThumbnail: string | null;
+    /**
+     * Description of embed after image finishes generating.
+     */
+    finishedEmbedDescription: string | null;
+    /**
+     * A list of parameters to not be inline when displayed within the embed.
+     */
+    embedParametersNoInline: string[];
+    /**
+     * Milliseconds before RESTful request times out.
+     */
+    requestTimeout: number;
+}
+
+export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods, ISDSettings, ISDCustomizations };
