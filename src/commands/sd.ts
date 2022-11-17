@@ -165,7 +165,11 @@ const command: ICommand = {
         await interaction.reply({ embeds: [ responseEmbed ] });
 
         /* Get generated image and convert it from base64 to an image buffer. */
+        const now: number = performance.now();
         const imgInfo: ITxt2ImgResponse = await txt2img(options);
+        const then: number = performance.now();
+        const timeTaken: number = (then - now) / 1000;
+        const timeString: string = `${`${Math.floor(timeTaken / 60)}`.padStart(2, '0')}:${`${(timeTaken % 60).toFixed(2)}`.padStart(2, '0')}`;
         const output: AttachmentBuilder = new AttachmentBuilder(Buffer.from(imgInfo.images[0], "base64"), { name: "output.png" });
 
         /* Update the previous embed with the generated image (and seed if a random seed was used). */
@@ -176,8 +180,7 @@ const command: ICommand = {
                     .setDescription(sdCustomizations.finishedEmbedDescription)
                     .setThumbnail(sdCustomizations.finishedEmbedThumbnail)
                     .setImage("attachment://output.png")
-                    .setFooter({ text: `Seed: ${JSON.parse(imgInfo.info).seed}` })
-                    // TODO: Add timestamps. Maybe total generation time.
+                    .setFooter({ text: `Seed: ${JSON.parse(imgInfo.info).seed}\t\tTime taken: ${timeString}` })
             ],
             files: [ output ]
         });
@@ -190,7 +193,7 @@ const command: ICommand = {
                 ...txt2imgParameterDefaults,
                 ...options
             },
-            result: "Success"
+            result: `Success. Time taken: ${timeString}`
         });
     },
     async autocomplete(interaction: AutocompleteInteraction): Promise<void> {
