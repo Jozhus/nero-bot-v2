@@ -78,6 +78,7 @@ const command: ICommand = {
         const sd_hypernetwork: string = interaction.options.getString("hypernetwork");
         const sd_hypernetwork_strength: number = interaction.options.getNumber("hypernetwork_strength");
 
+        /* Construct options object with given parameters only if they exist */
         const options: ITxt2ImgPayload = {
             prompt,
             ...(negative_prompt) && { negative_prompt },
@@ -93,6 +94,7 @@ const command: ICommand = {
         }
 
         // TODO: Maybe make a template for other commands to use
+        /* Placeholder embed to reply with while waiting on response from stable-diffusion-webui's API. */
         const responseEmbed: EmbedBuilder = new EmbedBuilder()
             .setAuthor({ name: "txt2img", iconURL: "https://i.imgur.com/HEj61LF.png" })
             .setTitle("Nero-bot")
@@ -110,9 +112,11 @@ const command: ICommand = {
 
         await interaction.reply({ embeds: [ responseEmbed ] });
 
+        /* Get generated image and convert it from base64 to an image buffer. */
         const imgInfo: ITxt2ImgResponse = await txt2img(options);
         const output: AttachmentBuilder = new AttachmentBuilder(Buffer.from(imgInfo.images[0], "base64"), { name: "output.png" });
 
+        /* Update the previous embed with the generated image (and seed if a random seed was used). */
         await interaction.editReply({
             embeds: [
                 responseEmbed
@@ -138,28 +142,38 @@ const command: ICommand = {
         });
     },
     async autocomplete(interaction: AutocompleteInteraction): Promise<void> {
+        // User's current input to the parameter field.
         const input: string = interaction.options.getFocused();
+        // Message item to show in the list when the search results in more than 25 items (Discord's limit). This object takes up a space.
         const overflowMessage: ApplicationCommandOptionChoiceData = {
             name: "Refine your search to view more.",
             value: "-1"
         };
 
+        /* If no search input, show a list of categories, otherwise show the search result. */
         if (!input.length) {
             const response: ApplicationCommandOptionChoiceData[] = [
+                // Header item to show at the top of the list.
                 { name: "Type to search by the following categories:", value: "-1" },
+                // List of categories that the hypernetwork is sorted by.
                 ...Object.keys(hypernetworkListSorted).map((hypernetwork: string) => { return { name: hypernetwork, value: hypernetwork} }).slice(0, (Object.keys(hypernetworkListSorted).length > 24) ? 23 : 24),
             ];
 
+            // Including the header item, display the overflow message on the list if the total number of categories exceeds 25.
             if (Object.keys(hypernetworkListSorted).length > 23) {
                 response.push(overflowMessage);
             }
+
             await interaction.respond(response);
         } else {
+            // Filter the list of hypernetworks by the search term.
             const filtered: string[] = hypernetworkFlatList.filter((hypernetwork: string) => hypernetwork.includes(input));
             const response: ApplicationCommandOptionChoiceData[] = [
+                // Hypernetwork names remove the attached category.
                 ...filtered.map((hypernetwork: string) => { return { name: hypernetwork, value: hypernetwork.split(' - ').splice(-1)[0] } }).slice(0, (filtered.length > 25) ? 24 : 25),
             ];
 
+            // Display the overflow message on the list if the total number of categories exceeds 25.
             if (filtered.length > 24) {
                 response.push(overflowMessage);
             }
@@ -170,6 +184,14 @@ const command: ICommand = {
     }
 }
 
+/**
+ * Makes a POST request to stable-diffusion-webui's txt2img API with generator options in the body to generate an image.
+ * 
+ * Requests will time out after 2 mins of no response.
+ * 
+ * @param options An object containing image generation parameters.
+ * @returns An object containing generated images encoded in base64, updated parameters and extra information.
+ */
 async function txt2img(options: ITxt2ImgPayload): Promise<ITxt2ImgResponse> {
     const data: ITxt2ImgPayload = { ...txt2imgDefaults, ...options };
 

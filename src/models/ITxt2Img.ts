@@ -1,7 +1,13 @@
 import { sampleMethods } from "../constants/stringConstants";
 
+/**
+ * Listed sampling methods converted into a type to use for slash command parameter validation.
+ */
 type SamplingMethods = typeof sampleMethods[number];
 
+/**
+ * Schema for the body of the POST request when interfacing with the stable-diffusion-webui API's txt2img endpoint.
+ */
 interface ITxt2ImgPayload {
     /**
      * Use a two step process to partially create an image at smaller resolution, upscale, and then improve details in it without changing composition
@@ -89,19 +95,43 @@ interface ITxt2ImgPayload {
      * Which algorithm to use to produce the image
      */
     sampler_index?: SamplingMethods;
+    /**
+     * A list of settings and values to override the current settings only for the single interaction.
+     */
     override_settings?: ISettings
 };
 
+/**
+ * Expected response schema of the stable-diffusion-webui API's txt2img endpoint.
+ */
 interface ITxt2ImgResponse {
+    /**
+     * A list of output images encoded in base64.
+     */
     images: string[];
+    /**
+     * A list of updated parameters that stable-diffusion used in generating the images.
+     */
     parameters: ITxt2ImgPayload;
+    /**
+     * Extra information provided by stable-diffusion that resulted from generating images.
+     */
     info: string;
 };
 
+/**
+ * A schema for all of stable-diffusion-webui's internal settings.
+ * There are so many more, but I will add only the ones I plan to use.
+ */
 interface ISettings {
+    /**
+     * The name of the hypernetwork being used.
+     */
     sd_hypernetwork?: string;
+    /**
+     * The strength of the hypernetwork's affect on the current model.
+     */
     sd_hypernetwork_strength?: number;
-    // There are so many more, but I will add only the ones I plan to use
 }
 
 export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods, ISettings };
