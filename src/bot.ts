@@ -8,7 +8,7 @@ const client: Client<boolean> = new Client({ intents: [ GatewayIntentBits.Guilds
 const commands: Collection<string, ICommand> = new Collection<string, ICommand>();
 
 /* Load commands */
-commandList.forEach(async (command: ICommand) => {
+commandList.forEach((command: ICommand) => {
     commands.set(command.data.name, command);
 });
 
