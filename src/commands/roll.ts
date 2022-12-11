@@ -21,7 +21,7 @@ const command: ICommand = {
                 .setMinValue(rollParameterConstraints.minSides)
                 .setRequired(false)
         ),
-    async execute(interaction: ChatInputCommandInteraction) {
+    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const amount: number = interaction.options.getInteger("amount");
         const sides: number = interaction.options.getInteger("sides");
 

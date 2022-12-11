@@ -1,4 +1,4 @@
-import { AutocompleteInteraction, CommandInteraction, ModalSubmitInteraction, SelectMenuInteraction, SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import { AutocompleteInteraction, CommandInteraction, ModalSubmitInteraction, SelectMenuInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
 /**
  * Interface for all slash commands to implement.
@@ -25,6 +25,10 @@ interface ICommand {
     autocomplete?(interaction: AutocompleteInteraction): Promise<void>;
 };
 
+interface ICommandParameterDefaults {
+    readonly [parameter: string]: any; // Gross any.
+}
+
 /**
  * Min / max constraints for slash command parameters.
  */
@@ -32,4 +36,4 @@ interface ICommandParameterConstraints {
     readonly [parameter: string]: number;
 };
 
-export { ICommand, ICommandParameterConstraints };
+export { ICommand, ICommandParameterDefaults, ICommandParameterConstraints };

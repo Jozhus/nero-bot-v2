@@ -1,6 +1,6 @@
-import { ICommandParameterConstraints } from "../models/ICommand";
+import { ICommandParameterConstraints, ICommandParameterDefaults } from "../models/ICommand";
 import { IRollOptions } from "../models/IRollOptions";
-import { ISDCustomizations, ITxt2ImgPayload } from "../models/ISD";
+import { ISDCustomizations } from "../models/ISD";
 
 const rollParameterDefaults: IRollOptions = {
     amount: 1,
@@ -14,7 +14,7 @@ const rollParameterConstraints: ICommandParameterConstraints = {
     minSides: 1
 };
 
-const txt2imgParameterDefaults: ITxt2ImgPayload = {
+const sdParameterDefaults: ICommandParameterDefaults = {
     prompt: "",
     steps: 32,
     cfg_scale: 12,
@@ -28,12 +28,15 @@ const txt2imgParameterDefaults: ITxt2ImgPayload = {
     firstphase_height: 0,
     denoising_strength: 0.7,
     seed: -1,
+    resize_mode: 1,
     override_settings: {
+        sd_model_checkpoint: "Anything-V3.0-pruned-fp32.ckpt [1a7df6b8]",
+        sd_hypernetwork: "None",
         sd_hypernetwork_strength: 1
     }
 };
 
-const txt2imgParameterConstraints: ICommandParameterConstraints = {
+const sdParameterConstraints: ICommandParameterConstraints = {
     maxPrompt: 1024, // Discord limitation
     maxNegative_prompt: 1024, // Discord limitation
     minSteps: 1,
@@ -52,7 +55,7 @@ const txt2imgParameterConstraints: ICommandParameterConstraints = {
     maxDenoising_strength: 1,
     minSeed: -1, // -1 = Random seed
     minHypernetwork_strength: 0,
-    maxHypernetwork_strength: 1, 
+    maxHypernetwork_strength: 1
 };
 
 const sdCustomizations: ISDCustomizations = {
@@ -62,8 +65,9 @@ const sdCustomizations: ISDCustomizations = {
     finishedEmbedColor: 0x77dd77,
     finishedEmbedThumbnail: "https://i.imgur.com/Jr2xoJw.png",
     finishedEmbedDescription: "Here ya go!",
+    embedParametersIgnore: ["init_images"],
     embedParametersNoInline: ["prompt", "negative_prompt", "seed", "sd_hypernetwork", "sd_hypernetwork_strength"],
     requestTimeout: 120000
 };
 
-export { rollParameterDefaults, rollParameterConstraints, txt2imgParameterDefaults, txt2imgParameterConstraints, sdCustomizations };
+export { rollParameterDefaults, rollParameterConstraints, sdParameterDefaults, sdParameterConstraints, sdCustomizations };

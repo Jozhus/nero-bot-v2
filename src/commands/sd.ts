@@ -1,107 +1,120 @@
-import { AttachmentBuilder, ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandSubcommandBuilder, SlashCommandBooleanOption, SlashCommandStringOption, SlashCommandNumberOption, AutocompleteInteraction, ApplicationCommandOptionChoiceData } from "discord.js";
+import { AttachmentBuilder, ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, AutocompleteInteraction, ApplicationCommandOptionChoiceData, SlashCommandBooleanOption, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandAttachmentOption, Attachment } from "discord.js";
 import { logCommand } from "../helpers/logger.js";
 import { ICommand } from "../models/ICommand.js";
-import { txt2imgParameterDefaults, txt2imgParameterConstraints, sdCustomizations } from "../constants/commandConstants.js";
+import { sdParameterDefaults, sdCustomizations, sdParameterConstraints } from "../constants/commandConstants.js";
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { sampleMethods, sdAPI } from "../constants/stringConstants.js";
-import { ISDSettings, ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods } from "../models/ISD.js";
-import { hypernetworkFlatList, hypernetworkListSorted } from "../helpers/constructSDList.js";
+import { resize_modes, sampleMethods, sdAPI } from "../constants/stringConstants.js";
+import { ISDSettings, ITxt2ImgPayload, ISDResponse, SamplingMethods, IImg2ImgPayload } from "../models/ISD.js";
+import { hypernetworkFlatList, hypernetworkListSorted, modelList } from "../helpers/constructSDList.js";
 import { flattenObject } from "../helpers/flattenObject.js";
+import { IModelItem } from "../models/IModelItem.js";
+import { imgUrl2Base64 } from "../helpers/imgUrl2Base64.js";
 
 const command: ICommand = {
     data: new SlashCommandBuilder()
         .setName("sd")
-        .setDescription("stable diffusion")
-        .addSubcommand((subcommand: SlashCommandSubcommandBuilder) => 
-            subcommand
-            .setName("txt2img")
-            .setDescription("Nero will generate an image for you based on your prompt")
-            .addStringOption((option: SlashCommandStringOption) => 
-                option.setName("prompt")
-                    .setDescription("Text prompt for AI to think about.")
-                    .setMaxLength(txt2imgParameterConstraints.maxPrompt)
-                    .setRequired(true)
-            )
-            .addStringOption((option: SlashCommandStringOption) => 
-                option.setName("negative_prompt")
-                    .setDescription(`Text prompt for AI to avoid thinking about.`)
-                    .setMaxLength(txt2imgParameterConstraints.maxNegative_prompt)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("steps")
-                    .setDescription(`How many times to improve the generated image iteratively. (Default: ${txt2imgParameterDefaults.steps})`)
-                    .setMinValue(txt2imgParameterConstraints.minSteps)
-                    .setMaxValue(txt2imgParameterConstraints.maxSteps)
-                    .setRequired(false)
-            ).addNumberOption((option: SlashCommandNumberOption) => 
-                option.setName("guidance_strength")
-                    .setDescription(`Classifier Free Guidance Scale. (Default: ${txt2imgParameterDefaults.cfg_scale})`)
-                    .setMinValue(txt2imgParameterConstraints.minCfg_scale)
-                    .setMaxValue(txt2imgParameterConstraints.maxCfg_scale)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("width")
-                    .setDescription(`Width of the generated image. Must be divisible by 64 or it will round up. (Default: ${txt2imgParameterDefaults.width})`)
-                    .setMinValue(txt2imgParameterConstraints.minWidth)
-                    .setMaxValue(txt2imgParameterConstraints.maxWidth)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("height")
-                    .setDescription(`Height of the generated image. Must be divisible by 64 or it will round up. (Default: ${txt2imgParameterDefaults.height})`)
-                    .setMinValue(txt2imgParameterConstraints.minHeight)
-                    .setMaxValue(txt2imgParameterConstraints.maxHeight)
-                    .setRequired(false)
-            )
-            .addStringOption((option: SlashCommandStringOption) => 
-                option.setName("sample_method")
-                    .setDescription(`Which algorithm to use to produce the image. (Default: ${txt2imgParameterDefaults.sampler_index})`)
-                    .addChoices(...(sampleMethods.map((method: string) => {return { name: method, value: method }})))
-                    .setRequired(false)
-            ).addBooleanOption((option: SlashCommandBooleanOption) => 
-                option.setName("restore_faces")
-                    .setDescription(`Restore low quality faces using GFPGAN neural network. (Default: ${txt2imgParameterDefaults.restore_faces})`)
-                    .setRequired(false)
-            ).addBooleanOption((option: SlashCommandBooleanOption) => 
-                option.setName("highres_fix")
-                    .setDescription(`Create an image at smaller resolution, upscale, and improve the details in it (Default: ${txt2imgParameterDefaults.enable_hr})`)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("firstpass_width")
-                    .setDescription(`Width of the first pass image when highres fix is enabled. (Default: ${txt2imgParameterDefaults.firstphase_width})`)
-                    .setMinValue(txt2imgParameterConstraints.minFirstphase_width)
-                    .setMaxValue(txt2imgParameterConstraints.maxFirstphase_width)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("firstpass_height")
-                    .setDescription(`A value that determines the output of random number generator. (Default: ${txt2imgParameterDefaults.firstphase_height})`)
-                    .setMinValue(txt2imgParameterConstraints.minFirstphase_height)
-                    .setMaxValue(txt2imgParameterConstraints.maxFirstphase_height)
-                    .setRequired(false)
-            ).addNumberOption((option: SlashCommandNumberOption) => 
-                option.setName("denoising_strength")
-                    .setDescription(`Determines how little respect the algorithm should have for image's content. (Default: ${txt2imgParameterDefaults.denoising_strength})`)
-                    .setMinValue(txt2imgParameterConstraints.minDenoising_strength)
-                    .setMaxValue(txt2imgParameterConstraints.maxDenoising_strength)
-                    .setRequired(false)
-            ).addIntegerOption((option: SlashCommandIntegerOption) => 
-                option.setName("seed")
-                    .setDescription(`A value that determines the output of random number generator. (Default: Random)`)
-                    .setMinValue(txt2imgParameterConstraints.minSeed)
-                    .setRequired(false)
-            ).addStringOption((option: SlashCommandStringOption) => 
+        .setDescription("Nero will generate an image for you based on your prompt. Attach an image to modify that image.")
+        .addStringOption((option: SlashCommandStringOption) => 
+            option.setName("prompt")
+                .setDescription("Text prompt for AI to think about.")
+                .setMaxLength(sdParameterConstraints.maxPrompt)
+                .setRequired(true)
+        ).addAttachmentOption((option: SlashCommandAttachmentOption) => 
+            option.setName("img2img")
+                .setDescription("Upload an image to enable img2img mode.")
+                .setRequired(false)
+        )
+        .addStringOption((option: SlashCommandStringOption) => 
+            option.setName("negative_prompt")
+                .setDescription(`Text prompt for AI to avoid thinking about.`)
+                .setMaxLength(sdParameterConstraints.maxNegative_prompt)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("steps")
+                .setDescription(`How many times to improve the generated image iteratively. (Default: ${sdParameterDefaults.steps})`)
+                .setMinValue(sdParameterConstraints.minSteps)
+                .setMaxValue(sdParameterConstraints.maxSteps)
+                .setRequired(false)
+        ).addNumberOption((option: SlashCommandNumberOption) => 
+            option.setName("guidance_strength")
+                .setDescription(`Classifier Free Guidance Scale. (Default: ${sdParameterDefaults.cfg_scale})`)
+                .setMinValue(sdParameterConstraints.minCfg_scale)
+                .setMaxValue(sdParameterConstraints.maxCfg_scale)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("width")
+                .setDescription(`Width of the generated image. Must be divisible by 64 or it will round up. (Default: ${sdParameterDefaults.width})`)
+                .setMinValue(sdParameterConstraints.minWidth)
+                .setMaxValue(sdParameterConstraints.maxWidth)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("height")
+                .setDescription(`Height of the generated image. Must be divisible by 64 or it will round up. (Default: ${sdParameterDefaults.height})`)
+                .setMinValue(sdParameterConstraints.minHeight)
+                .setMaxValue(sdParameterConstraints.maxHeight)
+                .setRequired(false)
+        )
+        .addStringOption((option: SlashCommandStringOption) => 
+            option.setName("sample_method")
+                .setDescription(`Which algorithm to use to produce the image. (Default: ${sdParameterDefaults.sampler_index})`)
+                .addChoices(...(sampleMethods.map((method: string) => {return { name: method, value: method }})))
+                .setRequired(false)
+        ).addBooleanOption((option: SlashCommandBooleanOption) => 
+            option.setName("restore_faces")
+                .setDescription(`Restore low quality faces using GFPGAN neural network. (Default: ${sdParameterDefaults.restore_faces})`)
+                .setRequired(false)
+        ).addNumberOption((option: SlashCommandNumberOption) => 
+            option.setName("denoising_strength")
+                .setDescription(`Determines how little respect the algorithm should have for image's content. (Default: ${sdParameterDefaults.denoising_strength})`)
+                .setMinValue(sdParameterConstraints.minDenoising_strength)
+                .setMaxValue(sdParameterConstraints.maxDenoising_strength)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("seed")
+                .setDescription(`A value that determines the output of random number generator. (Default: Random)`)
+                .setMinValue(sdParameterConstraints.minSeed)
+                .setRequired(false)
+        ).addStringOption((option: SlashCommandStringOption) => 
+            option.setName("model")
+                .setDescription(`Which training model to use. (Default: ${sdParameterDefaults.override_settings.sd_model_checkpoint})`)
+                .addChoices(...modelList.map((model: IModelItem) => { return { name: model.title, value: model.title } })) // Might want to turn this into an autocomplete in the future.
+                .setRequired(false)
+        ).addStringOption((option: SlashCommandStringOption) => 
             option.setName("hypernetwork")
                 .setDescription(`Which algorithm to use to produce the image.`)
                 .setAutocomplete(true)
                 .setRequired(false)
-            ).addNumberOption((option: SlashCommandNumberOption) => 
+        ).addNumberOption((option: SlashCommandNumberOption) => 
             option.setName("hypernetwork_strength")
-                .setDescription(`Strength of the hypernetwork. (Default: ${txt2imgParameterDefaults.override_settings.sd_hypernetwork_strength})`)
-                .setMinValue(txt2imgParameterConstraints.minHypernetwork_strength)
-                .setMaxValue(txt2imgParameterConstraints.maxHypernetwork_strength)
+                .setDescription(`Strength of the hypernetwork. (Default: ${sdParameterDefaults.override_settings.sd_hypernetwork_strength})`)
+                .setMinValue(sdParameterConstraints.minHypernetwork_strength)
+                .setMaxValue(sdParameterConstraints.maxHypernetwork_strength)
                 .setRequired(false)
-        )
+        ).addBooleanOption((option: SlashCommandBooleanOption) => 
+            option.setName("highres_fix")
+                .setDescription(`[txt2img] Create image at smaller resolution and upscales to improve the details. (Default: ${sdParameterDefaults.enable_hr})`)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("firstpass_width")
+                .setDescription(`[txt2img] Width of the first pass image when highres fix is enabled. (Default: ${sdParameterDefaults.firstphase_width})`)
+                .setMinValue(sdParameterConstraints.minFirstphase_width)
+                .setMaxValue(sdParameterConstraints.maxFirstphase_width)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("firstpass_height")
+                .setDescription(`[txt2img] A value that determines the output of random number generator. (Default: ${sdParameterDefaults.firstphase_height})`)
+                .setMinValue(sdParameterConstraints.minFirstphase_height)
+                .setMaxValue(sdParameterConstraints.maxFirstphase_height)
+                .setRequired(false)
+        ).addIntegerOption((option: SlashCommandIntegerOption) => 
+            option.setName("resize_mode")
+                .setDescription(`[img2img] Resize modes (Default: ${resize_modes[sdParameterDefaults.resize_mode]})`)
+                .addChoices(...resize_modes.map((mode: string, index: number) => { return { name: mode, value: index } }))
+                .setRequired(false)
         ),
-    async execute(interaction: ChatInputCommandInteraction) {
+    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+        const attachment: Attachment = interaction.options.getAttachment("img2img");
+        const command: string = (attachment?.contentType.includes("image")) ? "img2img" : "txt2img";
         const prompt: string = interaction.options.getString("prompt");
         const negative_prompt: string = interaction.options.getString("negative_prompt");
         const steps: number = interaction.options.getInteger("steps");
@@ -110,22 +123,18 @@ const command: ICommand = {
         let height: number = interaction.options.getInteger("height");
         const sampler_index: SamplingMethods = interaction.options.getString("sample_method") as SamplingMethods;
         const restore_faces: boolean = interaction.options.getBoolean("fix_faces");
-        const enable_hr: boolean = interaction.options.getBoolean("highres_fix");
-        let firstphase_width: number = interaction.options.getInteger("firstpass_width");
-        let firstphase_height: number = interaction.options.getInteger("firstpass_height");
         const denoising_strength: number = interaction.options.getNumber("denoising_strength");
         const seed: number = interaction.options.getInteger("seed");
+        const sd_model_checkpoint: string = interaction.options.getString("model");
         const sd_hypernetwork: string = interaction.options.getString("hypernetwork");
         const sd_hypernetwork_strength: number = interaction.options.getNumber("hypernetwork_strength");
 
         /* Round up to the nearest divisible of 64. */
         width = Math.ceil(width / 64) * 64;
         height = Math.ceil(height / 64) * 64;
-        firstphase_width = Math.ceil(firstphase_width / 64) * 64;
-        firstphase_height = Math.ceil(firstphase_height / 64) * 64;
-
+        
         /* Construct options object with given parameters only if they exist. */
-        const options: ITxt2ImgPayload = {
+        let options: ITxt2ImgPayload | IImg2ImgPayload = {
             prompt,
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
@@ -134,26 +143,54 @@ const command: ICommand = {
             ...(height) && { height },
             ...(sampler_index) && { sampler_index },
             ...(restore_faces) && { restore_faces },
-            ...(enable_hr) && { enable_hr },
-            ...(firstphase_width) && { firstphase_width },
-            ...(firstphase_height) && { firstphase_height },
             ...(denoising_strength) && { denoising_strength },
             ...(seed) && { seed },
             override_settings: {
+                ...(sd_model_checkpoint) && { sd_model_checkpoint },
                 ...(sd_hypernetwork) && { sd_hypernetwork },
                 ...(sd_hypernetwork_strength) && { sd_hypernetwork_strength }
             }
         }
 
+        switch (command) {
+            case "txt2img":
+                const enable_hr: boolean = interaction.options.getBoolean("highres_fix");
+                let firstphase_width: number = interaction.options.getInteger("firstpass_width");
+                let firstphase_height: number = interaction.options.getInteger("firstpass_height");
+
+                /* Round up to the nearest divisible of 64. */
+                firstphase_width = Math.ceil(firstphase_width / 64) * 64;
+                firstphase_height = Math.ceil(firstphase_height / 64) * 64;
+
+                options = {
+                    ...options,
+                    ...(enable_hr) && { enable_hr },
+                    ...(firstphase_width) && { firstphase_width },
+                    ...(firstphase_height) && { firstphase_height }
+                }
+                break;
+            case "img2img":
+                const init_images: string[] = [ await imgUrl2Base64(attachment.url) ];
+                const resize_mode: number = interaction.options.getInteger("resize_mode");
+
+                options = {
+                    ...options,
+                    ...(init_images) && { init_images },
+                    ...(resize_mode) && { resize_mode }
+                };
+                break;
+        }
+
         // TODO: Maybe make a template for other commands to use
         /* Placeholder embed to reply with while waiting on response from stable-diffusion-webui's API. */
         const responseEmbed: EmbedBuilder = new EmbedBuilder()
-            .setAuthor({ name: "txt2img", iconURL: "https://i.imgur.com/HEj61LF.png" })
+            .setAuthor({ name: command, iconURL: "https://i.imgur.com/HEj61LF.png" })
             .setTitle("Nero-bot")
             .setColor(sdCustomizations.unfinishedEmbedColor)
             .setThumbnail(sdCustomizations.unfinishedEmbedThumbnail)
             .setDescription(sdCustomizations.unfinishedEmbedDescription)
-            .addFields(Object.entries(flattenObject(options)).map(([name, value]: [string, string | number | ISDSettings]) => {
+            .setImage((command === "img2img") ? attachment.url : null)
+            .addFields(Object.entries(flattenObject(options)).filter(([name, value]: [string, string | number | ISDSettings]) => !sdCustomizations.embedParametersIgnore.includes(name)).map(([name, value]: [string, string | number | ISDSettings]) => {
                 return {
                     name,
                     value: `${value}`,
@@ -166,10 +203,12 @@ const command: ICommand = {
 
         /* Get generated image and convert it from base64 to an image buffer. */
         const now: number = performance.now();
-        const imgInfo: ITxt2ImgResponse = await txt2img(options);
+        
+        const imgInfo: ISDResponse = await generateImage(command, options); // TODO: Error handle.
+
         const then: number = performance.now();
         const timeTaken: number = (then - now) / 1000;
-        const timeString: string = `${`${Math.floor(timeTaken / 60)}`.padStart(2, '0')}:${`${(timeTaken % 60).toFixed(2)}`.padStart(2, '0')}`;
+        const timeString: string = `${`${Math.floor(timeTaken / 60)}`.padStart(2, '0')}:${`${(timeTaken % 60).toFixed(2)}`.padStart(5, '0')}`;
         const output: AttachmentBuilder = new AttachmentBuilder(Buffer.from(imgInfo.images[0], "base64"), { name: "output.png" });
 
         /* Update the previous embed with the generated image (and seed if a random seed was used). */
@@ -179,19 +218,22 @@ const command: ICommand = {
                     .setColor(sdCustomizations.finishedEmbedColor)
                     .setDescription(sdCustomizations.finishedEmbedDescription)
                     .setThumbnail(sdCustomizations.finishedEmbedThumbnail)
+                    .addFields((command === "img2img") ? [ { 
+                        name: "init_images",
+                        value: `[${attachment.name}](${attachment.url})`
+                     } ] : [])
                     .setImage("attachment://output.png")
                     .setFooter({ text: `Seed: ${JSON.parse(imgInfo.info).seed}\t\tTime taken: ${timeString}` })
             ],
             files: [ output ]
         });
 
-
         logCommand({
-            source: "txt2img",
+            source: command,
             interaction,
             parameters: {
-                ...txt2imgParameterDefaults,
-                ...options
+                ...sdParameterDefaults,
+                ...Object.entries(flattenObject(options)).filter(([name, value]: [string, string | number | ISDSettings]) => !sdCustomizations.embedParametersIgnore.includes(name))
             },
             result: `Success. Time taken: ${timeString}`
         });
@@ -240,23 +282,27 @@ const command: ICommand = {
 }
 
 /**
- * Makes a POST request to stable-diffusion-webui's txt2img API with generator options in the body to generate an image.
+ * Makes a POST request to stable-diffusion-webui's API with generator options in the body to generate an image.
  * 
  * Requests will time out after 2 mins of no response.
  * 
  * @param options An object containing image generation parameters.
  * @returns An object containing generated images encoded in base64, updated parameters and extra information.
  */
-async function txt2img(options: ITxt2ImgPayload): Promise<ITxt2ImgResponse> {
-    const data: ITxt2ImgPayload = { ...txt2imgParameterDefaults, ...options };
+function generateImage(method: string, options: ITxt2ImgPayload | IImg2ImgPayload): Promise<ISDResponse> {
+    if (!["txt2img", "img2img"].includes(method)) {
+        throw new Error("Invalid image generation method!");
+    }
+
+    const data: ITxt2ImgPayload | IImg2ImgPayload = { ...sdParameterDefaults, ...options };
 
     return axios({
         method: "POST",
-        url: sdAPI + "/sdapi/v1/txt2img/",
+        url: sdAPI + "/sdapi/v1/" + method,
         timeout: sdCustomizations.requestTimeout,
         data
     })
-    .then((response: AxiosResponse<ITxt2ImgResponse>) => {
+    .then((response: AxiosResponse<ISDResponse>) => {
         return response.data;
     })
     .catch((err: AxiosError) => {
@@ -265,4 +311,4 @@ async function txt2img(options: ITxt2ImgPayload): Promise<ITxt2ImgResponse> {
     });
 }
 
-export { command, txt2img };
+export { command, generateImage as txt2img };

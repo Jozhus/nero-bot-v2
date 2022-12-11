@@ -6,26 +6,14 @@ import { sampleMethods } from "../constants/stringConstants";
 type SamplingMethods = typeof sampleMethods[number];
 
 /**
- * Schema for the body of the POST request when interfacing with the stable-diffusion-webui API's txt2img endpoint.
+ * Base payload schema to be used by both txt2img and img2img.
  */
-interface ITxt2ImgPayload {
-    /**
-     * Use a two step process to partially create an image at smaller resolution, upscale, and then improve details in it without changing composition
-     */
-    enable_hr?: boolean;
+interface IBasePayload {
     /**
      * Determines how little respect the algorithm should have for image's content. At 0, nothing will change, and at 1 you'll get an unrelated image. With values below 1.0, processing will take less steps than the Sampling Steps slider specifies.
      */
     denoising_strength?: number;
-    /**
-     * Width of the first pass image when highres fix is enabled.
-     */
-    firstphase_width?: number;
-    /**
-     * Height of the first pass image when highres fix is enabled.
-     */
-    firstphase_height?: number;
-    /**
+     /**
      * Text prompt for AI to think about
      */
     prompt: string;
@@ -108,9 +96,55 @@ interface ITxt2ImgPayload {
 };
 
 /**
+ * Schema for the body of the POST request when interfacing with the stable-diffusion-webui API's txt2img endpoint.
+ */
+interface ITxt2ImgPayload extends IBasePayload {
+    /**
+     * Use a two step process to partially create an image at smaller resolution, upscale, and then improve details in it without changing composition
+     */
+    enable_hr?: boolean;
+    /**
+     * Width of the first pass image when highres fix is enabled.
+     */
+    firstphase_width?: number;
+    /**
+     * Height of the first pass image when highres fix is enabled.
+     */
+    firstphase_height?: number;
+};
+
+/**
+ * Schema for the body of the POST request when interfacing with the stable-diffusion-webui API's img2img endpoint.
+ */
+interface IImg2ImgPayload extends IBasePayload {
+    /**
+     * An array of images encoded in base64.
+     */
+    init_images: string[];
+    /**
+     * This is just a guess:
+     * 
+     * 0 - Just resize
+     * 1 - Crop and resize
+     * 2 - Resize and fill
+     */
+    resize_mode: number;
+
+    /* The following is for inpainting which I'm not planing to support yet. */
+    mask: string;
+    mask_blur: number;
+    inpainting_fill: number;
+    inpaint_full_res: boolean;
+    inpaint_full_res_padding: number;
+    inpainting_mask_invert: number;
+    initial_noise_multiplier: number;
+    include_init_images: boolean;
+};
+
+/**
  * Expected response schema of the stable-diffusion-webui API's txt2img endpoint.
  */
-interface ITxt2ImgResponse {
+interface ISDResponse {
     /**
      * A list of output images encoded in base64.
      */
@@ -131,6 +165,10 @@ interface ITxt2ImgResponse {
  */
 interface ISDSettings {
     /**
+     * The model being used.
+     */
+    sd_model_checkpoint?: string;
+    /**
      * The name of the hypernetwork being used.
      */
     sd_hypernetwork?: string;
@@ -140,6 +178,9 @@ interface ISDSettings {
     sd_hypernetwork_strength?: number;
 }
 
+/**
+ * Schema for customizing the sd slash command.
+ */
 interface ISDCustomizations {
     /**
      * Sidebar color of embed while image is generating.
@@ -166,6 +207,10 @@ interface ISDCustomizations {
      */
     finishedEmbedDescription: string | null;
     /**
+     * A list of parameters to omit on the embed.
+     */
+    embedParametersIgnore: string[];
+    /**
      * A list of parameters to not be inline when displayed within the embed.
      */
     embedParametersNoInline: string[];
@@ -175,4 +220,4 @@ interface ISDCustomizations {
     requestTimeout: number;
 }
 
-export { ITxt2ImgPayload, ITxt2ImgResponse, SamplingMethods, ISDSettings, ISDCustomizations };
+export { ITxt2ImgPayload, IImg2ImgPayload, ISDResponse, SamplingMethods, ISDSettings, ISDCustomizations };
