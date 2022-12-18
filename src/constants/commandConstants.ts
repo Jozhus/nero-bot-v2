@@ -43,6 +43,7 @@ const sdParameterConstraints: ICommandParameterConstraints = {
     maxSteps: 150,
     minCfg_scale: 1,
     maxCfg_scale: 30,
+    dimensionFactor: 8, // Makes sure image dimensions are divisible by dimensionFactor
     minWidth: 64,
     maxWidth: 1024,
     minHeight: 64,

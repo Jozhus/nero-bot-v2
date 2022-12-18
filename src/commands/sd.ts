@@ -9,6 +9,7 @@ import { hypernetworkFlatList, hypernetworkListSorted, modelList } from "../help
 import { flattenObject } from "../helpers/flattenObject.js";
 import { IModelItem } from "../models/IModelItem.js";
 import { imgUrl2Base64 } from "../helpers/imgUrl2Base64.js";
+import { round2NearestFactor } from "../helpers/round2NearestFactor.js";
 
 const command: ICommand = {
     data: new SlashCommandBuilder()
@@ -128,14 +129,75 @@ const command: ICommand = {
         const sd_model_checkpoint: string = interaction.options.getString("model");
         const sd_hypernetwork: string = interaction.options.getString("hypernetwork");
         const sd_hypernetwork_strength: number = interaction.options.getNumber("hypernetwork_strength");
-
-        /* Round up to the nearest divisible of 64. */
-        width = Math.ceil(width / 64) * 64;
-        height = Math.ceil(height / 64) * 64;
         
+        let options: ITxt2ImgPayload | IImg2ImgPayload = {};
+
+        switch (command) {
+            case "txt2img":
+                const enable_hr: boolean = interaction.options.getBoolean("highres_fix");
+                let firstphase_width: number = interaction.options.getInteger("firstpass_width");
+                let firstphase_height: number = interaction.options.getInteger("firstpass_height");
+
+                /* Round up to the nearest divisible of dimensionFactor. */
+                firstphase_width = round2NearestFactor(firstphase_height, sdParameterConstraints.dimensionFactor);
+                firstphase_height = round2NearestFactor(firstphase_height, sdParameterConstraints.dimensionFactor);
+
+                options = {
+                    ...options,
+                    ...(enable_hr) && { enable_hr },
+                    ...(firstphase_width) && { firstphase_width },
+                    ...(firstphase_height) && { firstphase_height }
+                }
+                break;
+            case "img2img":
+                if (!attachment) {
+                    break;
+                }
+
+                const init_images: string[] = [ await imgUrl2Base64(attachment.url) ];
+                const resize_mode: number = interaction.options.getInteger("resize_mode");
+
+                /* Maintain resolution by calculating missing values. */
+                const resRatio: number =  Math.max(attachment.width, attachment.height) / Math.min(attachment.width, attachment.height);
+
+                if (!width && !height) {
+                    width = sdParameterDefaults.width;
+                }
+
+                if (width) {
+                    if (!height) {
+                        height = (attachment.width > attachment.height) ? width / resRatio : width * resRatio;
+                    }
+                } else {
+                    if (height) {
+                        width = (attachment.width > attachment.height) ? height * resRatio : height / resRatio;
+                    }
+                }
+
+                /* Scale image down to constraint values */
+                if (width > sdParameterConstraints.width || height > sdParameterConstraints.height) {
+                    const scale: number = Math.max(sdParameterConstraints.width, sdParameterConstraints.height) / Math.max(width, height);
+
+                    width *= scale;
+                    height *= scale;
+                }
+
+                options = {
+                    ...options,
+                    ...(init_images) && { init_images },
+                    ...(resize_mode) && { resize_mode }
+                };
+                break;
+        }
+
+        /* Round up to the nearest divisible of dimensionFactor. */
+        width = Math.ceil(width / sdParameterConstraints.dimensionFactor) * sdParameterConstraints.dimensionFactor;
+        height = Math.ceil(height / sdParameterConstraints.dimensionFactor) * sdParameterConstraints.dimensionFactor;
+
         /* Construct options object with given parameters only if they exist. */
-        let options: ITxt2ImgPayload | IImg2ImgPayload = {
+        options = {
             prompt,
+            ...options,
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
             ...(cfg_scale) && { cfg_scale },
@@ -150,35 +212,6 @@ const command: ICommand = {
                 ...(sd_hypernetwork) && { sd_hypernetwork },
                 ...(sd_hypernetwork_strength) && { sd_hypernetwork_strength }
             }
-        }
-
-        switch (command) {
-            case "txt2img":
-                const enable_hr: boolean = interaction.options.getBoolean("highres_fix");
-                let firstphase_width: number = interaction.options.getInteger("firstpass_width");
-                let firstphase_height: number = interaction.options.getInteger("firstpass_height");
-
-                /* Round up to the nearest divisible of 64. */
-                firstphase_width = Math.ceil(firstphase_width / 64) * 64;
-                firstphase_height = Math.ceil(firstphase_height / 64) * 64;
-
-                options = {
-                    ...options,
-                    ...(enable_hr) && { enable_hr },
-                    ...(firstphase_width) && { firstphase_width },
-                    ...(firstphase_height) && { firstphase_height }
-                }
-                break;
-            case "img2img":
-                const init_images: string[] = [ await imgUrl2Base64(attachment.url) ];
-                const resize_mode: number = interaction.options.getInteger("resize_mode");
-
-                options = {
-                    ...options,
-                    ...(init_images) && { init_images },
-                    ...(resize_mode) && { resize_mode }
-                };
-                break;
         }
 
         // TODO: Maybe make a template for other commands to use

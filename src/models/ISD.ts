@@ -16,7 +16,7 @@ interface IBasePayload {
      /**
      * Text prompt for AI to think about
      */
-    prompt: string;
+    prompt?: string;
     /**
      * Style to apply; styles have components for both positive and negative prompts and apply to bot
      */
