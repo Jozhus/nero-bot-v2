@@ -17,7 +17,7 @@ const rollParameterConstraints: ICommandParameterConstraints = {
 const sdParameterDefaults: ICommandParameterDefaults = {
     prompt: "",
     steps: 32,
-    cfg_scale: 12,
+    cfg_scale: 7,
     width: 512,
     height: 512,
     negative_prompt: "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts,signature, watermark, username, blurry, artist name",

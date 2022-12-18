@@ -22,7 +22,7 @@ const command: ICommand = {
                 .setRequired(true)
         ).addAttachmentOption((option: SlashCommandAttachmentOption) => 
             option.setName("img2img")
-                .setDescription("Upload an image to enable img2img mode.")
+                .setDescription("Upload an image to enable img2img mode. Dimensions is preserved and scaled if not provided.")
                 .setRequired(false)
         )
         .addStringOption((option: SlashCommandStringOption) => 
@@ -158,12 +158,15 @@ const command: ICommand = {
                 const resize_mode: number = interaction.options.getInteger("resize_mode");
 
                 /* Maintain resolution by calculating missing values. */
+
                 const resRatio: number =  Math.max(attachment.width, attachment.height) / Math.min(attachment.width, attachment.height);
 
+                /* If no dimensions are given, start with default width size. */
                 if (!width && !height) {
                     width = sdParameterDefaults.width;
                 }
 
+                /* Calculations with resRatio depends on which dimension is larger. */
                 if (width) {
                     if (!height) {
                         height = (attachment.width > attachment.height) ? width / resRatio : width * resRatio;
@@ -174,7 +177,7 @@ const command: ICommand = {
                     }
                 }
 
-                /* Scale image down to constraint values */
+                /* Scale image down to constraint values if either surpass the constraint maxes. */
                 if (width > sdParameterConstraints.width || height > sdParameterConstraints.height) {
                     const scale: number = Math.max(sdParameterConstraints.width, sdParameterConstraints.height) / Math.max(width, height);
 
