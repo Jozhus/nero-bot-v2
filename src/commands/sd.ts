@@ -19,7 +19,7 @@ const command: ICommand = {
             option.setName("prompt")
                 .setDescription("Text prompt for AI to think about.")
                 .setMaxLength(sdParameterConstraints.maxPrompt)
-                .setRequired(true)
+                .setRequired(false)
         ).addAttachmentOption((option: SlashCommandAttachmentOption) => 
             option.setName("img2img")
                 .setDescription("Upload an image to enable img2img mode. Dimensions is preserved and scaled if not provided.")
