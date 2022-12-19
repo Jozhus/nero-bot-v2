@@ -199,8 +199,8 @@ const command: ICommand = {
 
         /* Construct options object with given parameters only if they exist. */
         options = {
-            prompt,
             ...options,
+            ...(prompt) && { prompt },
             ...(negative_prompt) && { negative_prompt },
             ...(steps) && { steps },
             ...(cfg_scale) && { cfg_scale },
