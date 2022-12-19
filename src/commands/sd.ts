@@ -178,8 +178,8 @@ const command: ICommand = {
                 }
 
                 /* Scale image down to constraint values if either surpass the constraint maxes. */
-                if (width > sdParameterConstraints.width || height > sdParameterConstraints.height) {
-                    const scale: number = Math.max(sdParameterConstraints.width, sdParameterConstraints.height) / Math.max(width, height);
+                if (width > sdParameterConstraints.maxWidth || height > sdParameterConstraints.maxHeight) {
+                    const scale: number = Math.max(sdParameterConstraints.maxWidth, sdParameterConstraints.maxHeight) / Math.max(width, height);
 
                     width *= scale;
                     height *= scale;
